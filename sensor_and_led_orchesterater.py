@@ -1,5 +1,7 @@
-from nanpy import (ArduinoApi, SerialManager, Ultrasonic)
+from nanpy import ArduinoApi, SerialManager, Ultrasonic
 from time import sleep
+import threading
+from graphql_config.mutaions import updateParkingSpaceStatus
 
 ledPin1 = 8
 echoPin1 = 9
@@ -8,14 +10,15 @@ ledPin1State = False
 
 try:
     connection = SerialManager()
-    a = ArduinoApi (connection=connection)
+    a = ArduinoApi(connection=connection)
     ultrasonic1 = Ultrasonic(echoPin1, trigPin1, False, connection=connection)
-except:
+except Exception as err:
     print("Failed to connect to Arduino")
+    print(err)
 
-a.pinMode (trigPin1, a.OUTPUT)
-a.pinMode (echoPin1, a.INPUT)
-a.pinMode (ledPin1, a.OUTPUT)
+a.pinMode(trigPin1, a.OUTPUT)
+a.pinMode(echoPin1, a.INPUT)
+a.pinMode(ledPin1, a.OUTPUT)
 
 print("-----> The sensor started <-----")
 try:
@@ -24,14 +27,21 @@ try:
         sleep(0.5)
         distance = ultrasonic1.get_distance()
         if distance >= 0 and distance < 30:
-          print(f'{distance}cm \n')
-          a.digitalWrite(ledPin1, a.HIGH)
+            on = threading.Thread(
+                target=updateParkingSpaceStatus, args=("6035c931a1ffe80204b8de3a", True)
+            )
+            on.start()
+            print(f"{distance}cm \n")
+            a.digitalWrite(ledPin1, a.HIGH)
         else:
-          #print(f'{distance}cm \n')
-          a.digitalWrite(ledPin1, a.LOW)
-except:
+            a.digitalWrite(ledPin1, a.LOW)
+            off = threading.Thread(
+                target=updateParkingSpaceStatus,
+                args=("6035c931a1ffe80204b8de3a", False),
+            )
+            off.start()
+
+except Exception as err:
     a.digitalWrite(ledPin1, a.LOW)
     print("Failed to read the distance OR System closed")
- 
-
-  
+    print(err)

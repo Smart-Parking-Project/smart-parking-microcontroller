@@ -1,5 +1,10 @@
-from nanpy import ArduinoApi
+import os
+import threading
+from graphql_config.mutaions import updateParkingSpaceStatus
 
-a = ArduinoApi()
-a.pinMode(13, a.OUTPUT)
-a.digitalWrite(13, a.HIGH)
+on = threading.Thread(
+    target=updateParkingSpaceStatus, args=("6035c931a1ffe80204b8de3a", True)
+)
+on.start()
+
+# updateParkingSpaceStatus("6035c931a1ffe80204b8de3a", True)
